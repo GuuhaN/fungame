@@ -1,0 +1,19 @@
+{
+    "name": "Azure Web PubSub Transport for Netcode for GameObjects",
+    "rootNamespace": "Netcode.Transports.AzureWebPubSub",
+    "references": [
+        "Unity.Netcode.Runtime",
+        "UniTask",
+        "UnityEditor.UI",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
