@@ -15,6 +15,10 @@ public class NetworkPlayer : NetworkBehaviour
     public void Initialize()
     {
         _rigidbody = GetComponent<Rigidbody>();
+        if (IsOwner)
+        {
+            GetComponentInChildren<AudioListener>().enabled = true;
+        }
     }
 
     public override void OnNetworkSpawn()
@@ -35,6 +39,17 @@ public class NetworkPlayer : NetworkBehaviour
     }
 
     public void Update()
+    {
+        if (!IsOwner)
+        {
+            return;
+        }
+        
+        MovePlayerServerRpc();
+    }
+
+    [ServerRpc]
+    public void MovePlayerServerRpc()
     {
         _rigidbody.MovePosition(transform.position + _movement * (_movementSpeed * Time.deltaTime));
     }

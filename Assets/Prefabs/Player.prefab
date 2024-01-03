@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2872416608435871257}
   - component: {fileID: 146880336797592394}
   m_Layer: 0
-  m_Name: Local
+  m_Name: Camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -92,7 +92,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 401592751415914235}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!1 &3707721134948117338
 GameObject:
   m_ObjectHideFlags: 0
@@ -219,7 +219,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3603715637
+  GlobalObjectIdHash: 636429592
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
