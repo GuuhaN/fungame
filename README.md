@@ -1,4 +1,4 @@
-# Prerequisites
+# Prerequisites for WebGL netcode for gameobjects (ignore for PC builds)
 1. Azure Pubsub Service (Free tier for dev)
 
 # How to startup
