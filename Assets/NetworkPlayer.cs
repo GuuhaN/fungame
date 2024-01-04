@@ -44,12 +44,17 @@ public class NetworkPlayer : NetworkBehaviour
 
     public void Update()
     {
-        var moveInput = _playerInput.Player.Move.ReadValue<Vector3>();
+        if (!IsOwner)
+        {
+            return;
+        }
+            var moveInput = _playerInput.Player.Move.ReadValue<Vector3>();
         var lookInput = _playerInput.Player.Look.ReadValue<Vector2>();
         
         MovePlayer(moveInput);
         RotatePlayer(lookInput);
-        
+        JumpPlayer();
+
         // todo: Server Authoritative Movement add with Client Side Prediction and Server Reconciliation (and Lag Compensation)
         // if (IsServer && IsLocalPlayer)
         // {
@@ -97,5 +102,17 @@ public class NetworkPlayer : NetworkBehaviour
     private void RotatePlayerServerRPC(Vector2 lookInput)
     {
         RotatePlayer(lookInput);
+    }
+
+    private void JumpPlayer()
+    {
+        var isGrounded = Physics.Raycast(transform.position, Vector3.down, 1.1f);
+
+        if (!isGrounded) return;
+        
+        if (_playerInput.Player.Jump.triggered)
+        {
+            _rigidbody.AddForce(Vector3.up * 5f, ForceMode.Impulse);
+        }
     }
 }
