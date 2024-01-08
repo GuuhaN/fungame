@@ -1,13 +1,19 @@
-using System;
-using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.InputSystem;
+using Unity.Netcode;
+using Unity.VisualScripting;
 
 public class NetworkPlayer : NetworkBehaviour
 {
+    [Header("Player")]
     [SerializeField] private GameObject _playerCamera;
+    [SerializeField] private Transform _shootingPoint;
+    
+    [Header("Movement")]
     [SerializeField] private float _movementSpeed;
     [SerializeField, Range(0, 90)] private float _clampedYRotation;
+    
+    [Header("Shooting")]
+    [SerializeField, Range(1, 10)] private int _shootingForce;
 
     private float TargetYRotation { get; set; }
     
@@ -48,13 +54,23 @@ public class NetworkPlayer : NetworkBehaviour
         {
             return;
         }
-            var moveInput = _playerInput.Player.Move.ReadValue<Vector3>();
-        var lookInput = _playerInput.Player.Look.ReadValue<Vector2>();
         
+        var moveInput = _playerInput.Player.Move.ReadValue<Vector3>();
+        var lookInput = _playerInput.Player.Look.ReadValue<Vector2>();
+
         MovePlayer(moveInput);
         RotatePlayer(lookInput);
         JumpPlayer();
 
+        if (IsServer && IsLocalPlayer)
+        {
+            ShootPlayer(_playerInput.Player.Fire.triggered);
+        }
+        else if(IsClient && IsLocalPlayer)
+        {
+            ShootPlayerServerRPC(_playerInput.Player.Fire.triggered);
+        }
+        
         // todo: Server Authoritative Movement add with Client Side Prediction and Server Reconciliation (and Lag Compensation)
         // if (IsServer && IsLocalPlayer)
         // {
@@ -75,10 +91,7 @@ public class NetworkPlayer : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void MovePlayerServerRPC(Vector3 movement)
-    {
-        MovePlayer(movement);
-    }
+    private void MovePlayerServerRPC(Vector3 movement) => MovePlayer(movement);
     
     private void RotatePlayer(Vector2 lookInput)
     {
@@ -99,10 +112,7 @@ public class NetworkPlayer : NetworkBehaviour
     }
     
     [ServerRpc]
-    private void RotatePlayerServerRPC(Vector2 lookInput)
-    {
-        RotatePlayer(lookInput);
-    }
+    private void RotatePlayerServerRPC(Vector2 lookInput) => RotatePlayer(lookInput);
 
     private void JumpPlayer()
     {
@@ -114,5 +124,50 @@ public class NetworkPlayer : NetworkBehaviour
         {
             _rigidbody.AddForce(Vector3.up * 5f, ForceMode.Impulse);
         }
+    }
+
+    private void ShootPlayer(bool isFiring)
+    {
+        if (!isFiring)
+        {
+            return;
+        }
+
+        if (_shootingPoint == null)
+        {
+            return;
+        }
+
+        var bulletObject = Instantiate(Resources.Load("Bullet"), _shootingPoint.position, _shootingPoint.rotation) as GameObject;
+        
+        if (bulletObject == null)
+        {
+            return;
+        }
+        
+        var bullet = bulletObject.GetComponent<Projectile>();
+        
+        bulletObject.GetComponent<NetworkObject>().Spawn();
+        bulletObject.GetComponent<Rigidbody>().AddForce(_shootingPoint.forward * Mathf.Floor(10f * bullet.Speed), ForceMode.Impulse);
+    }
+
+    [ServerRpc]
+    private void ShootPlayerServerRPC(bool isFiring) => ShootPlayer(isFiring);
+
+    public void OnCollisionEnter(Collision collision)
+    {
+        if (!collision.gameObject.CompareTag("HitObject"))
+        {
+            return;
+        }
+        
+        var projectile = collision.gameObject.GetComponent<Projectile>();
+        
+        if(projectile == null)
+        {
+            return;
+        }
+        
+        Debug.Log(projectile.Damage);
     }
 }
