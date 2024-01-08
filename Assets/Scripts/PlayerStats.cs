@@ -26,13 +26,23 @@ public class PlayerStats : MonoBehaviour
     private void Die()
     {
         //todo: define what death is: respawn, spectate, thrown out of the game?
+        Debug.Log("Dead");
     }
     
-    private void OnCollisionEnter(Collision other)
+    public void OnCollisionEnter(Collision collision)
     {
-        if (other.gameObject.CompareTag("HitObject"))
+        if (!collision.gameObject.CompareTag("HitObject"))
         {
-            TakeDamage(1);
+            return;
         }
+        
+        var projectile = collision.gameObject.GetComponent<Projectile>();
+        
+        if(projectile == null)
+        {
+            return;
+        }
+        
+        TakeDamage(projectile.Damage);
     }
 }

@@ -150,21 +150,4 @@ public class NetworkPlayer : NetworkBehaviour
 
     [ServerRpc]
     private void ShootPlayerServerRPC(bool isFiring) => ShootPlayer(isFiring);
-
-    public void OnCollisionEnter(Collision collision)
-    {
-        if (!collision.gameObject.CompareTag("HitObject"))
-        {
-            return;
-        }
-        
-        var projectile = collision.gameObject.GetComponent<Projectile>();
-        
-        if(projectile == null)
-        {
-            return;
-        }
-        
-        Debug.Log(projectile.Damage);
-    }
 }
