@@ -1,19 +1,32 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerStats : MonoBehaviour
 {
-    [SerializeField] protected int _health { get; private set; }
-    [SerializeField] private int _maxHealth;
-    // Start is called before the first frame update
+    [SerializeField] protected int _health;
+    [SerializeField, Range(100, 500)] protected int _maxHealth;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    [SerializeField, Range(1, 5)] private float _fireTime;
     
+    public int Health { get => _health; }
+    public int MaxHealth { get => _maxHealth; }
+    public float FireTime { get => _fireTime; private set => _fireTime = value; }
+
+    private void FixedUpdate()
+    {
+        ShootTimer();
+    }
+
+    private void ShootTimer()
+    {
+        if(FireTime > 0)
+        {
+            FireTime -= Time.deltaTime;
+        }
+    }
+
     private void TakeDamage(int damage)
     {
         _health -= damage;
