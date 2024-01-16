@@ -50,14 +50,11 @@ public class NetworkPlayer : NetworkBehaviour
         _rigidbody = GetComponent<Rigidbody>();
         _playerInput = new();
         _playerInput.Enable();
-        if (IsLocalPlayer)
-        {
-            _playerCamera.GetComponent<Camera>().enabled = true;
-        }
-        
+
         if (IsOwner)
         {
             GetComponentInChildren<AudioListener>().enabled = true;
+            _playerCamera.GetComponent<Camera>().enabled = true;
             if (Camera.main != null)
             {
                 Camera.main.enabled = false;
@@ -77,7 +74,7 @@ public class NetworkPlayer : NetworkBehaviour
     {
         timer.Update();
         
-        if (!IsOwner)
+        if (!IsOwner && !Application.isFocused)
         {
             return;
         }
@@ -265,27 +262,9 @@ public class NetworkPlayer : NetworkBehaviour
         var bullet = bulletObject.GetComponent<Projectile>();
 
         bulletObject.GetComponent<NetworkObject>().Spawn();
-        bulletObject.GetComponent<Rigidbody>()
-            .AddForce(_shootingPoint.forward * Mathf.Floor(2f * bullet.Speed), ForceMode.Impulse);
+        bulletObject.GetComponent<Rigidbody>().AddForce(_shootingPoint.forward * Mathf.Floor(2f * bullet.Speed), ForceMode.Impulse);
     }
 
     [ServerRpc]
     private void ShootPlayerServerRPC(bool isFiring) => ShootPlayer(isFiring);
-
-    public void OnCollisionEnter(Collision collision)
-    {
-        if (!collision.gameObject.CompareTag("HitObject"))
-        {
-            return;
-        }
-        
-        var projectile = collision.gameObject.GetComponent<Projectile>();
-        
-        if(projectile == null)
-        {
-            return;
-        }
-        
-        Debug.Log(projectile.Damage);
-    }
 }
