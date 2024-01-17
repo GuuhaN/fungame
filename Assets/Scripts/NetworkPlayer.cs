@@ -1,8 +1,8 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 
+[RequireComponent(typeof(Rigidbody), typeof(NetworkObject), typeof(MyPlayerInput))]
 public class NetworkPlayer : NetworkBehaviour
 {
     [Header("Player")] 
@@ -38,7 +38,6 @@ public class NetworkPlayer : NetworkBehaviour
     private CircularBuffer<StatePayload> serverStateBuffer;
     private Queue<InputPayload> serverInputQueue;
     [SerializeField] private float reconciliationThreshold = 10f;
-
 
     public void Awake()
     {
@@ -79,7 +78,7 @@ public class NetworkPlayer : NetworkBehaviour
     public void Update()
     {
         timer.Update();
-        
+
         if (!IsOwner && !Application.isFocused)
         {
             return;
@@ -283,8 +282,7 @@ public class NetworkPlayer : NetworkBehaviour
             return;
         }
         
-        // fire once every 1 second based on playerstats firetime
-        if (timer.CurrentTick % (tickRate / _playerStats.FireTime) != 0)
+        if(_playerStats.FireRate.Value > 0f)
         {
             return;
         }
@@ -301,5 +299,6 @@ public class NetworkPlayer : NetworkBehaviour
 
         bullet.NetworkObject.Spawn();
         bullet.Rigidbody.AddForce(_shootingPoint.forward * Mathf.Floor(2f * bullet.Speed), ForceMode.Impulse);
+        _playerStats.ResetShootTimer();
     }
 }

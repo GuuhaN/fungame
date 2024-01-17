@@ -1,61 +1,70 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
-public class PlayerStats : MonoBehaviour
+public class PlayerStats : NetworkBehaviour
 {
-    [SerializeField] protected int _health;
-    [SerializeField, Range(100, 500)] protected int _maxHealth;
-
-    [SerializeField, Range(1, 5)] private float _fireTime;
+    public NetworkVariable<byte> Health { get; private set; }
+    public NetworkVariable<float> FireRate { get; private set; }
+    [SerializeField, Range(1, 10)]
+    private float _fireRate;
+    [SerializeField, Range(100, 200, order = 10)]
+    private byte _maxHealth;
     
-    public int Health { get => _health; }
-    public int MaxHealth { get => _maxHealth; }
-    public float FireTime { get => _fireTime; private set => _fireTime = value; }
-
+    public void Awake()
+    {
+        Health = new NetworkVariable<byte>(_maxHealth);
+        FireRate = new NetworkVariable<float>(_fireRate);
+    }
+    
     private void FixedUpdate()
     {
         ShootTimer();
-    }
-
-    private void ShootTimer()
-    {
-        if(FireTime > 0)
-        {
-            FireTime -= Time.deltaTime;
-        }
-    }
-
-    private void TakeDamage(int damage)
-    {
-        _health -= damage;
-        if (_health <= 0)
+        
+        if (Health.Value <= 0)
         {
             Die();
         }
     }
-    
+
+    public void ResetShootTimer()
+    {
+        FireRate.Value = _fireRate;
+    }
+
+    private void ShootTimer()
+    {
+        if (FireRate.Value > 0f)
+        {
+            FireRate.Value -= Time.deltaTime;
+        }
+    }
+
     private void Die()
     {
         //todo: define what death is: respawn, spectate, thrown out of the game?
         Debug.Log("Dead");
+        Health.Value = _maxHealth;
     }
-    
+
     public void OnCollisionEnter(Collision collision)
     {
         if (!collision.gameObject.CompareTag("HitObject"))
         {
             return;
         }
-        
+
         var projectile = collision.gameObject.GetComponent<Projectile>();
-        
-        if(projectile == null)
+
+        if (projectile == null)
         {
             return;
         }
-        
+
         TakeDamage(projectile.Damage);
+    }
+
+    private void TakeDamage(int damage)
+    {
+        Health.Value -= (byte)damage;
     }
 }
