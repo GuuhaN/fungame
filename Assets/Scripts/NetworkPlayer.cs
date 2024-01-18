@@ -215,6 +215,11 @@ public class NetworkPlayer : NetworkBehaviour
     [ServerRpc]
     private void SendToServerRpc(InputPayload inputPayload)
     {
+        if(!IsOwner) 
+        {
+            return;
+        }
+        
         serverInputQueue.Enqueue(inputPayload);
     }
 
