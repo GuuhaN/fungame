@@ -1,5 +1,7 @@
+using Unity.Netcode;
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody), typeof(NetworkObject))]
 public class Projectile : MonoBehaviour
 {
     [Header("Projectile info")]
@@ -16,10 +18,12 @@ public class Projectile : MonoBehaviour
         get => _speed;
     }
 
-    public Rigidbody _rigidbody { get; set; }
+    public Rigidbody Rigidbody { get; private set; }
+    public NetworkObject NetworkObject { get; private set; }
 
     void Awake()
     {
-        _rigidbody = GetComponent<Rigidbody>();
+        Rigidbody = GetComponent<Rigidbody>();
+        NetworkObject = GetComponent<NetworkObject>();
     }
 }
