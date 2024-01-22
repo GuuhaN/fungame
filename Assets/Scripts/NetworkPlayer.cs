@@ -124,6 +124,7 @@ public class NetworkPlayer : NetworkBehaviour
         Physics.simulationMode = SimulationMode.FixedUpdate;
         
         RotatePlayer(input.rotationVector);
+        SpawnBullet(input.isFiring);
 
         return new StatePayload
         {
@@ -228,7 +229,7 @@ public class NetworkPlayer : NetworkBehaviour
         MovePlayer(input.inputVector);
         RotatePlayer(input.rotationVector);
         JumpPlayer(input.isJumping);
-        ShootPlayer(input.isFiring);
+        ShootBulletServerRpc(input.isFiring);
 
         return new StatePayload
         {
@@ -275,19 +276,20 @@ public class NetworkPlayer : NetworkBehaviour
         _rigidbody.AddForce(Vector3.up * 5f, ForceMode.Impulse);
     }
 
-    private void ShootPlayer(bool isFiring)
+    [ServerRpc]
+    private void ShootBulletServerRpc(bool isFiring)
     {
-        if (!isFiring)
+        if (!IsOwner)
         {
             return;
         }
 
-        if (_shootingPoint == null)
-        {
-            return;
-        }
-        
-        if(_playerStats.FireRate.Value > 0f)
+        SpawnBullet(isFiring);
+    }
+
+    private void SpawnBullet(bool isFiring)
+    {
+        if (!isFiring)
         {
             return;
         }
@@ -306,4 +308,36 @@ public class NetworkPlayer : NetworkBehaviour
         bullet.Rigidbody.AddForce(_shootingPoint.forward * Mathf.Floor(2f * bullet.Speed), ForceMode.Impulse);
         _playerStats.ResetShootTimer();
     }
+
+    // private void ShootPlayer(bool isFiring)
+    // {
+    //     if (!isFiring)
+    //     {
+    //         return;
+    //     }
+    //
+    //     if (_shootingPoint == null)
+    //     {
+    //         return;
+    //     }
+    //     
+    //     if(_playerStats.FireRate.Value > 0f)
+    //     {
+    //         return;
+    //     }
+    //
+    //     var bulletObject =
+    //         Instantiate(Resources.Load("Bullet"), _shootingPoint.position, _shootingPoint.rotation) as GameObject;
+    //
+    //     if (bulletObject == null)
+    //     {
+    //         return;
+    //     }
+    //
+    //     var bullet = bulletObject.GetComponent<Projectile>();
+    //
+    //     bullet.NetworkObject.Spawn();
+    //     bullet.Rigidbody.AddForce(_shootingPoint.forward * Mathf.Floor(2f * bullet.Speed), ForceMode.Impulse);
+    //     _playerStats.ResetShootTimer();
+    // }
 }
