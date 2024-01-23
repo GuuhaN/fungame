@@ -1,11 +1,9 @@
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
 public struct StatePayload : INetworkSerializable
 {
-    public int tick;
+    public byte tick;
     public Vector3 position;
     public Quaternion rotation;
     public Vector3 velocity;
@@ -23,7 +21,7 @@ public struct StatePayload : INetworkSerializable
 
 public struct InputPayload : INetworkSerializable
 {
-    public int tick;
+    public byte tick;
     public Vector3 inputVector;
     public Vector3 rotationVector;
     public bool isJumping;

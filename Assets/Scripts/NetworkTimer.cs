@@ -4,7 +4,7 @@ public class NetworkTimer
 {
     private float timer;
     public float MinTimeBetweenTicks { get; }
-    public int CurrentTick { get; private set; }
+    public byte CurrentTick { get; private set; }
 
     // Start is called before the first frame update
     public NetworkTimer(float tickRate)

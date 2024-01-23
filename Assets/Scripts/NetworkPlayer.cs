@@ -26,7 +26,7 @@ public class NetworkPlayer : NetworkBehaviour
     [Header("Networking")] 
     private NetworkTimer timer;
     private const float tickRate = 64f;
-    private const int BUFFER_SIZE = 1024;
+    private const ushort BUFFER_SIZE = 1024;
     
     // Network client behavior
     public CircularBuffer<StatePayload> stateBuffer;
@@ -79,7 +79,7 @@ public class NetworkPlayer : NetworkBehaviour
     {
         timer.Update();
 
-        if (!IsOwner && !Application.isFocused)
+        if (!Application.isFocused)
         {
             return;
         }
@@ -93,6 +93,11 @@ public class NetworkPlayer : NetworkBehaviour
 
     private void HandleServerTick()
     {
+        if (!IsServer)
+        {
+            return;
+        }
+        
         var bufferIndex = -1;
         while (serverInputQueue.Count > 0)
         {
@@ -100,7 +105,7 @@ public class NetworkPlayer : NetworkBehaviour
             
              bufferIndex = inputPayload.tick % BUFFER_SIZE;
 
-             var statePayload = SimulateMovement(inputPayload);
+             var statePayload = ProcessMovement(inputPayload);
              serverStateBuffer.Add(statePayload, bufferIndex);
         }
 
@@ -114,26 +119,6 @@ public class NetworkPlayer : NetworkBehaviour
         if (!IsOwner) return;
 
         lastServerState = statePayload;
-    }
-    
-    StatePayload SimulateMovement(InputPayload input)
-    {
-        Physics.simulationMode = SimulationMode.Script;
-        MovePlayer(input.inputVector);
-        Physics.Simulate(Time.fixedDeltaTime);
-        Physics.simulationMode = SimulationMode.FixedUpdate;
-        
-        RotatePlayer(input.rotationVector);
-        SpawnBullet(input.isFiring);
-
-        return new StatePayload
-        {
-            tick = input.tick,
-            position = transform.position,
-            rotation = transform.rotation,
-            velocity = _rigidbody.velocity,
-            angularVelocity = _rigidbody.angularVelocity
-        };
     }
 
     private void HandleClientTick()

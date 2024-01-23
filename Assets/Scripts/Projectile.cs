@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -30,8 +29,7 @@ public class Projectile : MonoBehaviour
         NetworkObject = GetComponent<NetworkObject>();
         StartCoroutine(DestroyObject(_lifeTime));
     }
-    
-    // make a coroutine that destroys the projectile after a certain amount of time
+
     private IEnumerator<WaitForSeconds> DestroyObject(float time)
     {
         yield return new WaitForSeconds(time);
