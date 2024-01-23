@@ -279,7 +279,7 @@ public class NetworkPlayer : NetworkBehaviour
     [ServerRpc]
     private void ShootBulletServerRpc(bool isFiring)
     {
-        if (!IsOwner)
+        if (!IsClient && !IsLocalPlayer)
         {
             return;
         }
@@ -290,6 +290,11 @@ public class NetworkPlayer : NetworkBehaviour
     private void SpawnBullet(bool isFiring)
     {
         if (!isFiring)
+        {
+            return;
+        }
+        
+        if(_playerStats.FireRate.Value > 0f)
         {
             return;
         }
@@ -308,36 +313,4 @@ public class NetworkPlayer : NetworkBehaviour
         bullet.Rigidbody.AddForce(_shootingPoint.forward * Mathf.Floor(2f * bullet.Speed), ForceMode.Impulse);
         _playerStats.ResetShootTimer();
     }
-
-    // private void ShootPlayer(bool isFiring)
-    // {
-    //     if (!isFiring)
-    //     {
-    //         return;
-    //     }
-    //
-    //     if (_shootingPoint == null)
-    //     {
-    //         return;
-    //     }
-    //     
-    //     if(_playerStats.FireRate.Value > 0f)
-    //     {
-    //         return;
-    //     }
-    //
-    //     var bulletObject =
-    //         Instantiate(Resources.Load("Bullet"), _shootingPoint.position, _shootingPoint.rotation) as GameObject;
-    //
-    //     if (bulletObject == null)
-    //     {
-    //         return;
-    //     }
-    //
-    //     var bullet = bulletObject.GetComponent<Projectile>();
-    //
-    //     bullet.NetworkObject.Spawn();
-    //     bullet.Rigidbody.AddForce(_shootingPoint.forward * Mathf.Floor(2f * bullet.Speed), ForceMode.Impulse);
-    //     _playerStats.ResetShootTimer();
-    // }
 }

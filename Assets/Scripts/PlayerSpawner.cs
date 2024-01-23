@@ -19,7 +19,7 @@ public class PlayerSpawner : NetworkBehaviour
         res.CreatePlayerObject = true;
         res.Position = GetSpawnPoint();
 
-        if (NetworkManager.Singleton.ConnectedClients.Count >= 2)
+        if (NetworkManager.Singleton.ConnectedClients.Count >= 8)
         {
             res.Approved = false;
             res.Reason = "Server is full";
@@ -28,7 +28,7 @@ public class PlayerSpawner : NetworkBehaviour
         res.Pending = false;
     }
     
-    private Vector3 GetSpawnPoint()
+    public Vector3 GetSpawnPoint()
     {
         return SpawnPoints[Random.Range(0, SpawnPoints.Length)].SpawnTransform.position;
     }

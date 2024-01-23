@@ -13,12 +13,15 @@ public class PlayerStats : NetworkBehaviour
     [SerializeField, Range(100, 200, order = 10)]
     private byte _maxHealth;
     
+    private PlayerSpawner _playerSpawner;
+    
     public void Awake()
     {
         Health = new NetworkVariable<byte>(_maxHealth);
         FireRate = new NetworkVariable<float>(_fireRate);
+        _playerSpawner = FindObjectOfType<PlayerSpawner>();
     }
-
+    
     public void Start()
     {
         _healthText.text = Health.Value.ToString();
@@ -50,8 +53,9 @@ public class PlayerStats : NetworkBehaviour
     private void Die()
     {
         //todo: define what death is: respawn, spectate, thrown out of the game?
-        Debug.Log("Dead");
         Health.Value = _maxHealth;
+        transform.position = _playerSpawner.GetSpawnPoint();
+        _healthText.text = Health.Value.ToString();
     }
 
     public void OnCollisionEnter(Collision collision)
