@@ -1,8 +1,11 @@
+using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 
 public class PlayerStats : NetworkBehaviour
 {
+    [SerializeField] 
+    private TextMeshProUGUI _healthText;
     public NetworkVariable<byte> Health { get; private set; }
     public NetworkVariable<float> FireRate { get; private set; }
     [SerializeField, Range(1, 10)]
@@ -10,10 +13,18 @@ public class PlayerStats : NetworkBehaviour
     [SerializeField, Range(100, 200, order = 10)]
     private byte _maxHealth;
     
+    private PlayerSpawner _playerSpawner;
+    
     public void Awake()
     {
         Health = new NetworkVariable<byte>(_maxHealth);
         FireRate = new NetworkVariable<float>(_fireRate);
+        _playerSpawner = FindObjectOfType<PlayerSpawner>();
+    }
+    
+    public void Start()
+    {
+        _healthText.text = Health.Value.ToString();
     }
     
     private void FixedUpdate()
@@ -42,8 +53,9 @@ public class PlayerStats : NetworkBehaviour
     private void Die()
     {
         //todo: define what death is: respawn, spectate, thrown out of the game?
-        Debug.Log("Dead");
         Health.Value = _maxHealth;
+        transform.position = _playerSpawner.GetSpawnPoint();
+        _healthText.text = Health.Value.ToString();
     }
 
     public void OnCollisionEnter(Collision collision)
@@ -61,10 +73,16 @@ public class PlayerStats : NetworkBehaviour
         }
 
         TakeDamage(projectile.Damage);
+        projectile.NetworkObject.Despawn();
     }
 
     private void TakeDamage(int damage)
     {
-        Health.Value -= (byte)damage;
+        if (Health.Value > 0)
+        {
+            Health.Value -= (byte)damage;
+        }
+        
+        _healthText.text = Health.Value.ToString();
     }
 }

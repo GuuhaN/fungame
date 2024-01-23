@@ -124,6 +124,7 @@ public class NetworkPlayer : NetworkBehaviour
         Physics.simulationMode = SimulationMode.FixedUpdate;
         
         RotatePlayer(input.rotationVector);
+        SpawnBullet(input.isFiring);
 
         return new StatePayload
         {
@@ -215,6 +216,11 @@ public class NetworkPlayer : NetworkBehaviour
     [ServerRpc]
     private void SendToServerRpc(InputPayload inputPayload)
     {
+        if(!IsOwner) 
+        {
+            return;
+        }
+        
         serverInputQueue.Enqueue(inputPayload);
     }
 
@@ -223,7 +229,7 @@ public class NetworkPlayer : NetworkBehaviour
         MovePlayer(input.inputVector);
         RotatePlayer(input.rotationVector);
         JumpPlayer(input.isJumping);
-        ShootPlayer(input.isFiring);
+        ShootBulletServerRpc(input.isFiring);
 
         return new StatePayload
         {
@@ -270,14 +276,20 @@ public class NetworkPlayer : NetworkBehaviour
         _rigidbody.AddForce(Vector3.up * 5f, ForceMode.Impulse);
     }
 
-    private void ShootPlayer(bool isFiring)
+    [ServerRpc]
+    private void ShootBulletServerRpc(bool isFiring)
     {
-        if (!isFiring)
+        if (!IsClient && !IsLocalPlayer)
         {
             return;
         }
 
-        if (_shootingPoint == null)
+        SpawnBullet(isFiring);
+    }
+
+    private void SpawnBullet(bool isFiring)
+    {
+        if (!isFiring)
         {
             return;
         }

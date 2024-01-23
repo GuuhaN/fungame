@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -7,6 +9,7 @@ public class Projectile : MonoBehaviour
     [Header("Projectile info")]
     [SerializeField, Range(1, 100)] private int _damage;
     [SerializeField, Range(1, 100)] private float _speed;
+    [SerializeField, Range(1, 10)] private float _lifeTime;
 
     public int Damage
     {
@@ -25,5 +28,13 @@ public class Projectile : MonoBehaviour
     {
         Rigidbody = GetComponent<Rigidbody>();
         NetworkObject = GetComponent<NetworkObject>();
+        StartCoroutine(DestroyObject(_lifeTime));
+    }
+    
+    // make a coroutine that destroys the projectile after a certain amount of time
+    private IEnumerator<WaitForSeconds> DestroyObject(float time)
+    {
+        yield return new WaitForSeconds(time);
+        NetworkObject.Despawn();
     }
 }
