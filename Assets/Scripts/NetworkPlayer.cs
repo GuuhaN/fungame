@@ -10,7 +10,8 @@ public class NetworkPlayer : NetworkBehaviour
     [SerializeField] private Transform _shootingPoint;
 
     [Header("Movement")]
-    [SerializeField] private float _movementSpeed;
+    [SerializeField, Range(1, 10)] private int _movementSpeed;
+    [SerializeField] private float _maxVelocity;
     [SerializeField, Range(0, 90)] private float _clampedYRotation;
 
     [Header("Shooting")]
@@ -229,7 +230,21 @@ public class NetworkPlayer : NetworkBehaviour
     private void MovePlayer(Vector3 movement)
     {
         var moveDirection = transform.right * movement.x + transform.forward * movement.z;
-        _rigidbody.MovePosition(transform.position + moveDirection * (_movementSpeed * Time.deltaTime));
+
+        if (moveDirection == Vector3.zero)
+        {
+            _rigidbody.velocity = new Vector3(_rigidbody.velocity.x / 1.005f, _rigidbody.velocity.y, _rigidbody.velocity.z / 1.005f);
+        }
+        
+        _rigidbody.velocity = new Vector3(_rigidbody.velocity.x, _rigidbody.velocity.y > 0 ? _rigidbody.velocity.y : _rigidbody.velocity.y  * 1.04f, _rigidbody.velocity.z) +
+                              moveDirection * (_movementSpeed * 15f * Time.deltaTime);
+        
+        Debug.Log(_rigidbody.velocity.y);
+        
+        if (_rigidbody.velocity.magnitude >= _maxVelocity)
+        {
+            _rigidbody.velocity = Vector3.ClampMagnitude(_rigidbody.velocity, _maxVelocity);
+        }
     }
 
     private void RotatePlayer(Vector2 lookInput)
@@ -258,7 +273,7 @@ public class NetworkPlayer : NetworkBehaviour
 
         if (!isGrounded) return;
 
-        _rigidbody.AddForce(Vector3.up * 5f, ForceMode.Impulse);
+        _rigidbody.AddForce(Vector3.up * 5f, ForceMode.Force);
     }
 
     [ServerRpc]
