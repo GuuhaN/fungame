@@ -23,6 +23,7 @@ public class NetworkPlayer : NetworkBehaviour
     private MyPlayerInput _playerInput;
     private Rigidbody _rigidbody;
     private PlayerStats _playerStats;
+    private Animator _animator;
 
     [Header("Networking")] 
     private NetworkTimer timer;
@@ -54,6 +55,7 @@ public class NetworkPlayer : NetworkBehaviour
     {
         _rigidbody = GetComponent<Rigidbody>();
         _playerStats = GetComponent<PlayerStats>();
+        _animator = GetComponent<Animator>();
         _playerInput = new();
         _playerInput.Enable();
 
@@ -76,7 +78,7 @@ public class NetworkPlayer : NetworkBehaviour
         Initialize();
     }
 
-    public void Update()
+    public void FixedUpdate()
     {
         timer.Update();
 
@@ -230,16 +232,19 @@ public class NetworkPlayer : NetworkBehaviour
     private void MovePlayer(Vector3 movement)
     {
         var moveDirection = transform.right * movement.x + transform.forward * movement.z;
-
-        if (moveDirection == Vector3.zero)
-        {
-            _rigidbody.velocity = new Vector3(_rigidbody.velocity.x / 1.005f, _rigidbody.velocity.y, _rigidbody.velocity.z / 1.005f);
-        }
         
-        _rigidbody.velocity = new Vector3(_rigidbody.velocity.x, _rigidbody.velocity.y > 0 ? _rigidbody.velocity.y : _rigidbody.velocity.y  * 1.04f, _rigidbody.velocity.z) +
-                              moveDirection * (_movementSpeed * 15f * Time.deltaTime);
+        // if (moveDirection == Vector3.zero)
+        // {
+        //     _rigidbody.velocity = new Vector3(_rigidbody.velocity.x / 1.01f, _rigidbody.velocity.y, _rigidbody.velocity.z / 1.01f);
+        // }
+        //
+        // _rigidbody.velocity = new Vector3(_rigidbody.velocity.x, _rigidbody.velocity.y > 0 ? _rigidbody.velocity.y : _rigidbody.velocity.y  * 1.04f, _rigidbody.velocity.z) +
+        //                       moveDirection * (_movementSpeed * 15f * Time.deltaTime);
+        //
+        // _animator.speed = Mathf.InverseLerp(0, 1, _rigidbody.velocity.magnitude);
+        //
         
-        Debug.Log(_rigidbody.velocity.y);
+        _rigidbody.AddForce(moveDirection * (_movementSpeed * 5f * Time.deltaTime), ForceMode.Impulse);
         
         if (_rigidbody.velocity.magnitude >= _maxVelocity)
         {
@@ -273,7 +278,7 @@ public class NetworkPlayer : NetworkBehaviour
 
         if (!isGrounded) return;
 
-        _rigidbody.AddForce(Vector3.up * 5f, ForceMode.Force);
+        _rigidbody.AddForce(Vector3.up * 20f, ForceMode.Impulse);
     }
 
     [ServerRpc]
