@@ -41,6 +41,8 @@ public class NetworkPlayer : NetworkBehaviour
     private Queue<InputPayload> serverInputQueue;
     [SerializeField] private float reconciliationThreshold = 10f;
 
+    [SerializeField] private Vector3 lastInputDirection;
+
     public void Awake()
     {
         timer = new NetworkTimer(tickRate);
@@ -235,7 +237,7 @@ public class NetworkPlayer : NetworkBehaviour
         
         // if (moveDirection == Vector3.zero)
         // {
-        //     _rigidbody.velocity = new Vector3(_rigidbody.velocity.x / 1.01f, _rigidbody.velocity.y, _rigidbody.velocity.z / 1.01f);
+        //     _rigidbody.velocity = new Vector3(_rigidbody.velocity.x / 1.025f, _rigidbody.velocity.y, _rigidbody.velocity.z / 1.025f);
         // }
         //
         // _rigidbody.velocity = new Vector3(_rigidbody.velocity.x, _rigidbody.velocity.y > 0 ? _rigidbody.velocity.y : _rigidbody.velocity.y  * 1.04f, _rigidbody.velocity.z) +
@@ -244,12 +246,19 @@ public class NetworkPlayer : NetworkBehaviour
         // _animator.speed = Mathf.InverseLerp(0, 1, _rigidbody.velocity.magnitude);
         //
         
-        _rigidbody.AddForce(moveDirection * (_movementSpeed * 5f * Time.deltaTime), ForceMode.Impulse);
-        
-        if (_rigidbody.velocity.magnitude >= _maxVelocity)
+        Debug.Log(moveDirection);
+
+        if (moveDirection != lastInputDirection)
         {
-            _rigidbody.velocity = Vector3.ClampMagnitude(_rigidbody.velocity, _maxVelocity);
+            _rigidbody.velocity = new Vector3(_rigidbody.velocity.x / 1.0075f, _rigidbody.velocity.y, _rigidbody.velocity.z / 1.0075f);
         }
+        
+        if (_rigidbody.velocity.magnitude < _maxVelocity)
+        {
+            _rigidbody.AddForce(moveDirection * (_movementSpeed * 5f * Time.deltaTime), ForceMode.Impulse);
+        }
+
+        lastInputDirection = moveDirection;
     }
 
     private void RotatePlayer(Vector2 lookInput)
@@ -278,7 +287,7 @@ public class NetworkPlayer : NetworkBehaviour
 
         if (!isGrounded) return;
 
-        _rigidbody.AddForce(Vector3.up * 20f, ForceMode.Impulse);
+        _rigidbody.AddForce(Vector3.up * 20f, ForceMode.Force);
     }
 
     [ServerRpc]
