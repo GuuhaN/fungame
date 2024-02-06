@@ -13,6 +13,9 @@ public class NetworkPlayer : NetworkBehaviour
     [SerializeField, Range(1, 10)] private int _movementSpeed;
     [SerializeField] private float _maxVelocity;
     [SerializeField, Range(0, 90)] private float _clampedYRotation;
+    [SerializeField] private bool _isGrounded;
+    [SerializeField] private bool _jumped;
+    
 
     [Header("Shooting")]
     [SerializeField, Range(1, 10)]
@@ -24,6 +27,7 @@ public class NetworkPlayer : NetworkBehaviour
     private Rigidbody _rigidbody;
     private PlayerStats _playerStats;
     private Animator _animator;
+    private Collider _collider;
 
     [Header("Networking")] 
     private NetworkTimer timer;
@@ -40,9 +44,10 @@ public class NetworkPlayer : NetworkBehaviour
     private CircularBuffer<StatePayload> serverStateBuffer;
     private Queue<InputPayload> serverInputQueue;
     [SerializeField] private float reconciliationThreshold = 10f;
-
+    
     [SerializeField] private Vector3 lastInputDirection;
-
+    private float currentDrag;
+    
     public void Awake()
     {
         timer = new NetworkTimer(tickRate);
@@ -58,13 +63,15 @@ public class NetworkPlayer : NetworkBehaviour
         _rigidbody = GetComponent<Rigidbody>();
         _playerStats = GetComponent<PlayerStats>();
         _animator = GetComponent<Animator>();
-        _playerInput = new();
-        _playerInput.Enable();
+        _collider = GetComponent<Collider>();
 
         if (IsOwner)
         {
             GetComponentInChildren<AudioListener>().enabled = true;
             _playerCamera.GetComponent<Camera>().enabled = true;
+            _playerInput = new();
+            _playerInput.Enable();
+            currentDrag = _rigidbody.drag;
             if (Camera.main != null)
             {
                 Camera.main.enabled = false;
@@ -83,7 +90,7 @@ public class NetworkPlayer : NetworkBehaviour
     public void FixedUpdate()
     {
         timer.Update();
-
+        
         if (!Application.isFocused)
         {
             return;
@@ -93,6 +100,18 @@ public class NetworkPlayer : NetworkBehaviour
         {
             HandleClientTick();
             HandleServerTick();
+        }
+    }
+
+    private void Update()
+    {
+        if (IsClient && IsLocalPlayer)
+        {
+            IsGrounded(_isGrounded);
+        }
+        else if (IsClient && IsLocalPlayer)
+        {
+            IsGroundedServerRpc(_isGrounded);
         }
     }
 
@@ -132,12 +151,12 @@ public class NetworkPlayer : NetworkBehaviour
 
         var currentTick = timer.CurrentTick;
         var bufferIndex = currentTick % BUFFER_SIZE;
-        var inputPayload = new InputPayload()
+        var inputPayload = new InputPayload
         {
             tick = currentTick,
             inputVector = _playerInput.Player.Move.ReadValue<Vector3>(),
             rotationVector = _playerInput.Player.Look.ReadValue<Vector2>(),
-            isJumping = _playerInput.Player.Jump.IsPressed(),
+            isJumping = _playerInput.Player.Jump.triggered && _playerInput.Player.Jump.ReadValue<float>() > 0,
             isFiring = _playerInput.Player.Fire.IsPressed()
         };
         
@@ -206,11 +225,6 @@ public class NetworkPlayer : NetworkBehaviour
     [ServerRpc]
     private void SendToServerRpc(InputPayload inputPayload)
     {
-        if(!IsOwner) 
-        {
-            return;
-        }
-        
         serverInputQueue.Enqueue(inputPayload);
     }
 
@@ -245,18 +259,14 @@ public class NetworkPlayer : NetworkBehaviour
         //
         // _animator.speed = Mathf.InverseLerp(0, 1, _rigidbody.velocity.magnitude);
         //
-        
-        Debug.Log(moveDirection);
 
-        if (moveDirection != lastInputDirection)
-        {
-            _rigidbody.velocity = new Vector3(_rigidbody.velocity.x / 1.0075f, _rigidbody.velocity.y, _rigidbody.velocity.z / 1.0075f);
-        }
-        
         if (_rigidbody.velocity.magnitude < _maxVelocity)
         {
-            _rigidbody.AddForce(moveDirection * (_movementSpeed * 5f * Time.deltaTime), ForceMode.Impulse);
+            Vector3 force = moveDirection * (_movementSpeed * (_isGrounded ? 5f : 1f));
+            _rigidbody.AddForce(force, ForceMode.Force);
         }
+        
+        _animator.speed = Mathf.InverseLerp(0, 1, _rigidbody.velocity.magnitude);
 
         lastInputDirection = moveDirection;
     }
@@ -282,12 +292,10 @@ public class NetworkPlayer : NetworkBehaviour
     private void JumpPlayer(bool isJumping)
     {
         if (!isJumping) return;
-        
-        var isGrounded = Physics.Raycast(transform.position, Vector3.down, 1.1f);
 
-        if (!isGrounded) return;
+        if (!_isGrounded) return;
 
-        _rigidbody.AddForce(Vector3.up * 20f, ForceMode.Force);
+        _rigidbody.AddForce(Vector3.up * 5.0f, ForceMode.Impulse);
     }
 
     [ServerRpc]
@@ -299,6 +307,22 @@ public class NetworkPlayer : NetworkBehaviour
         }
 
         SpawnBullet(isFiring);
+    }
+
+    [ServerRpc]
+    private void IsGroundedServerRpc(bool isGrounded)
+    {
+        IsGrounded(isGrounded);
+    }
+
+    private void IsGrounded(bool isGrounded)
+    {
+        if (!IsOwner)
+        {
+            return;
+        }
+
+        isGrounded = Physics.Raycast(transform.position, -transform.up, _collider.bounds.size.y / 2 + .01f);
     }
 
     private void SpawnBullet(bool isFiring)
