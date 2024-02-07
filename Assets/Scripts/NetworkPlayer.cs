@@ -322,7 +322,8 @@ public class NetworkPlayer : NetworkBehaviour
             return;
         }
 
-        isGrounded = Physics.Raycast(transform.position, -transform.up, _collider.bounds.size.y / 2 + .01f);
+        isGrounded = Physics.Raycast(transform.position, -transform.up, _collider.bounds.size.y / 2 + .05f);
+        _isGrounded = isGrounded;
     }
 
     private void SpawnBullet(bool isFiring)
