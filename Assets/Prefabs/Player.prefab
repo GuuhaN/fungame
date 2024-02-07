@@ -492,10 +492,8 @@ MonoBehaviour:
   _movementSpeed: 5
   _maxVelocity: 5
   _clampedYRotation: 90
-  _isGrounded:
-    m_InternalValue: 0
-  _jumped: 0
-  _shootingForce: 2
+  _isGrounded: 0
+  _jumpPower: 3
   reconciliationThreshold: 10
   lastInputDirection: {x: 0, y: 0, z: 0}
 --- !u!136 &5646480448728944598

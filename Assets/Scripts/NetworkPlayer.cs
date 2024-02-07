@@ -14,12 +14,8 @@ public class NetworkPlayer : NetworkBehaviour
     [SerializeField] private float _maxVelocity;
     [SerializeField, Range(0, 90)] private float _clampedYRotation;
     [SerializeField] private bool _isGrounded;
-    [SerializeField] private bool _jumped;
+    [SerializeField, Range(1, 10)] private int _jumpPower;
     
-
-    [Header("Shooting")]
-    [SerializeField, Range(1, 10)]
-    private int _shootingForce;
 
     private float TargetYRotation { get; set; }
 
@@ -89,6 +85,11 @@ public class NetworkPlayer : NetworkBehaviour
 
     public void FixedUpdate()
     {
+
+    }
+
+    private void Update()
+    {        
         timer.Update();
         
         if (!Application.isFocused)
@@ -101,10 +102,7 @@ public class NetworkPlayer : NetworkBehaviour
             HandleClientTick();
             HandleServerTick();
         }
-    }
 
-    private void Update()
-    {
         if (IsClient && IsLocalPlayer)
         {
             IsGrounded(_isGrounded);
@@ -156,7 +154,7 @@ public class NetworkPlayer : NetworkBehaviour
             tick = currentTick,
             inputVector = _playerInput.Player.Move.ReadValue<Vector3>(),
             rotationVector = _playerInput.Player.Look.ReadValue<Vector2>(),
-            isJumping = _playerInput.Player.Jump.triggered && _playerInput.Player.Jump.ReadValue<float>() > 0,
+            isJumping = _playerInput.Player.Jump.IsPressed() && _playerInput.Player.Jump.ReadValue<float>() > 0,
             isFiring = _playerInput.Player.Fire.IsPressed()
         };
         
@@ -259,6 +257,11 @@ public class NetworkPlayer : NetworkBehaviour
         //
         // _animator.speed = Mathf.InverseLerp(0, 1, _rigidbody.velocity.magnitude);
         //
+        
+        if (moveDirection != lastInputDirection)
+        {
+            _rigidbody.velocity = new Vector3(_rigidbody.velocity.x / 1.045f, _rigidbody.velocity.y, _rigidbody.velocity.z / 1.045f);
+        }
 
         if (_rigidbody.velocity.magnitude < _maxVelocity)
         {
@@ -295,7 +298,7 @@ public class NetworkPlayer : NetworkBehaviour
 
         if (!_isGrounded) return;
 
-        _rigidbody.AddForce(Vector3.up * 5.0f, ForceMode.Impulse);
+        _rigidbody.AddForce(Vector3.up * _jumpPower, ForceMode.Impulse);
     }
 
     [ServerRpc]
