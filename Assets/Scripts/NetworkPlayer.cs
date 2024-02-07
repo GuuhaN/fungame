@@ -42,7 +42,7 @@ public class NetworkPlayer : NetworkBehaviour
     [SerializeField] private float reconciliationThreshold = 10f;
     
     [SerializeField] private Vector3 lastInputDirection;
-    private float currentDrag;
+    private float currentMass;
     
     public void Awake()
     {
@@ -67,7 +67,7 @@ public class NetworkPlayer : NetworkBehaviour
             _playerCamera.GetComponent<Camera>().enabled = true;
             _playerInput = new();
             _playerInput.Enable();
-            currentDrag = _rigidbody.drag;
+            currentMass = _rigidbody.mass;
             if (Camera.main != null)
             {
                 Camera.main.enabled = false;
@@ -82,12 +82,7 @@ public class NetworkPlayer : NetworkBehaviour
         base.OnNetworkSpawn();
         Initialize();
     }
-
-    public void FixedUpdate()
-    {
-
-    }
-
+    
     private void Update()
     {        
         timer.Update();
@@ -263,14 +258,22 @@ public class NetworkPlayer : NetworkBehaviour
             _rigidbody.velocity = new Vector3(_rigidbody.velocity.x / 1.045f, _rigidbody.velocity.y, _rigidbody.velocity.z / 1.045f);
         }
 
-        if (_rigidbody.velocity.magnitude < _maxVelocity)
+        if (_rigidbody.velocity.magnitude < _maxVelocity && _isGrounded)
         {
             Vector3 force = moveDirection * (_movementSpeed * (_isGrounded ? 5f : 1f));
             _rigidbody.AddForce(force, ForceMode.Force);
         }
+
+        if (_rigidbody.velocity.y < 0 && !_isGrounded)
+        {
+            _rigidbody.mass = 10;
+        }
+        else if (_isGrounded)
+        {
+            _rigidbody.mass = 1;
+        }
         
         _animator.speed = Mathf.InverseLerp(0, 1, _rigidbody.velocity.magnitude);
-
         lastInputDirection = moveDirection;
     }
 
@@ -297,7 +300,7 @@ public class NetworkPlayer : NetworkBehaviour
         if (!isJumping) return;
 
         if (!_isGrounded) return;
-
+        
         _rigidbody.AddForce(Vector3.up * _jumpPower, ForceMode.Impulse);
     }
 

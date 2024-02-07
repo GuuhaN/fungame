@@ -489,11 +489,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _playerCamera: {fileID: 401592751415914235}
   _shootingPoint: {fileID: 9105542466157375469}
-  _movementSpeed: 5
+  _movementSpeed: 4
   _maxVelocity: 5
   _clampedYRotation: 90
   _isGrounded: 0
-  _jumpPower: 3
+  _jumpPower: 5
   reconciliationThreshold: 10
   lastInputDirection: {x: 0, y: 0, z: 0}
 --- !u!136 &5646480448728944598
