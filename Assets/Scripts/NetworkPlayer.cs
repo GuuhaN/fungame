@@ -18,6 +18,7 @@ public class NetworkPlayer : NetworkBehaviour
     
 
     private float TargetYRotation { get; set; }
+    private float currentMass;
 
     private MyPlayerInput _playerInput;
     private Rigidbody _rigidbody;
@@ -40,9 +41,6 @@ public class NetworkPlayer : NetworkBehaviour
     private CircularBuffer<StatePayload> serverStateBuffer;
     private Queue<InputPayload> serverInputQueue;
     [SerializeField] private float reconciliationThreshold = 10f;
-    
-    [SerializeField] private Vector3 lastInputDirection;
-    private float currentMass;
     
     public void Awake()
     {
@@ -242,39 +240,30 @@ public class NetworkPlayer : NetworkBehaviour
     {
         var moveDirection = transform.right * movement.x + transform.forward * movement.z;
         
-        // if (moveDirection == Vector3.zero)
-        // {
-        //     _rigidbody.velocity = new Vector3(_rigidbody.velocity.x / 1.025f, _rigidbody.velocity.y, _rigidbody.velocity.z / 1.025f);
-        // }
-        //
-        // _rigidbody.velocity = new Vector3(_rigidbody.velocity.x, _rigidbody.velocity.y > 0 ? _rigidbody.velocity.y : _rigidbody.velocity.y  * 1.04f, _rigidbody.velocity.z) +
-        //                       moveDirection * (_movementSpeed * 15f * Time.deltaTime);
-        //
-        // _animator.speed = Mathf.InverseLerp(0, 1, _rigidbody.velocity.magnitude);
-        //
-        
-        if (moveDirection != lastInputDirection)
-        {
-            _rigidbody.velocity = new Vector3(_rigidbody.velocity.x / 1.045f, _rigidbody.velocity.y, _rigidbody.velocity.z / 1.045f);
-        }
+        Vector3 force = _isGrounded
+            ? moveDirection * (_movementSpeed * 5f)
+            : moveDirection * (_movementSpeed * 5f * .75f);
 
-        if (_rigidbody.velocity.magnitude < _maxVelocity && _isGrounded)
+        _rigidbody.AddForce(force, ForceMode.Force);
+        
+        var flatVelocity = new Vector3(_rigidbody.velocity.x, 0, _rigidbody.velocity.z);
+
+        if (flatVelocity.magnitude > _maxVelocity)
         {
-            Vector3 force = moveDirection * (_movementSpeed * (_isGrounded ? 5f : 1f));
-            _rigidbody.AddForce(force, ForceMode.Force);
+            var limitedVelocity = flatVelocity.normalized * _maxVelocity;
+            _rigidbody.velocity = new Vector3(limitedVelocity.x, _rigidbody.velocity.y, limitedVelocity.z);
         }
 
         if (_rigidbody.velocity.y < 0 && !_isGrounded)
         {
-            _rigidbody.mass = 10;
+            _rigidbody.drag = 0;
         }
         else if (_isGrounded)
         {
-            _rigidbody.mass = 1;
+            _rigidbody.drag = 2;
         }
         
         _animator.speed = Mathf.InverseLerp(0, 1, _rigidbody.velocity.magnitude);
-        lastInputDirection = moveDirection;
     }
 
     private void RotatePlayer(Vector2 lookInput)
@@ -300,6 +289,8 @@ public class NetworkPlayer : NetworkBehaviour
         if (!isJumping) return;
 
         if (!_isGrounded) return;
+
+        _rigidbody.velocity = new Vector3(_rigidbody.velocity.x, 0, _rigidbody.velocity.z);
         
         _rigidbody.AddForce(Vector3.up * _jumpPower, ForceMode.Impulse);
     }
